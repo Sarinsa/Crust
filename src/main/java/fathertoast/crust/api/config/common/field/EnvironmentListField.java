@@ -22,7 +22,7 @@ public class EnvironmentListField extends GenericField<EnvironmentList> {
     
     /**
      * Provides a description of how to use environment lists. Recommended to put at the top of any file using environment lists.
-     * Always use put the environment condition descriptions at the bottom of the file if this is used!
+     * Always put the environment condition descriptions at the bottom of the file if this is used!
      */
     public static List<String> verboseDescription() {
         List<String> comment = new ArrayList<>();

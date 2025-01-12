@@ -8,7 +8,7 @@ import net.minecraftforge.common.MinecraftForge;
 /**
  * Fired when advancements are loaded from json.
  * This event allows for easy modification of
- * an advancements criteria before it is built.<br>
+ * an advancement's criteria before it is built.<br>
  * <br>
  *
  * This event is fired on the {@link MinecraftForge#EVENT_BUS} bus, does not
