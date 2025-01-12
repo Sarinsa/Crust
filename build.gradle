@@ -13,6 +13,7 @@ buildscript {
 plugins {
     id 'eclipse'
     id 'maven-publish'
+    id 'idea'
 }
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
@@ -162,5 +163,12 @@ publishing {
         maven {
             url "file:///${project.projectDir}/mcmodsrepo"
         }
+    }
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
     }
 }
