@@ -3,6 +3,7 @@ package fathertoast.crust.api.config.common;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import javax.annotation.Nullable;
@@ -16,29 +17,45 @@ import java.util.*;
  * the mod's config files and all fields defined in those files' specs.
  */
 public final class ConfigManager {
-    
+
+    /** Use modId String sensitive version below. */
+    @Deprecated( forRemoval = true )
+    public static ConfigManager create( String path ) {
+        return register( new ConfigManager( new File( FMLPaths.CONFIGDIR.get().toFile(), path + "/" ) ) );
+    }
+
     /**
      * Creates a new config manager that operates out of a folder within the config directory.
      * This is the recommended method for most mods, especially mods that use more than one config file.
      *
      * @param path The folder the new config manager will use for its config files, relative to the Forge config directory.
      *             By convention, this should be the mod's name.
-     * @return The new config manager.
-     * @throws IllegalStateException If your mod has already created a config manager.
-     */
-    public static ConfigManager create( String path ) {
-        return register( new ConfigManager( new File( FMLPaths.CONFIGDIR.get().toFile(), path + "/" ) ) );
-    }
-    
-    /**
-     * Creates a new config manager that operates directly within the config directory.
-     * This is the recommended method for very simple mods that only need a few options.
+     * @param modId Your mod's ID. Should match the one in your mod class.
      *
      * @return The new config manager.
      * @throws IllegalStateException If your mod has already created a config manager.
      */
+    public static ConfigManager create( String path, String modId ) {
+        return register( new ConfigManager( new File( FMLPaths.CONFIGDIR.get().toFile(), path + "/" ), modId ) );
+    }
+
+    /** Use modId String sensitive version below. */
+    @Deprecated( forRemoval = true )
     public static ConfigManager createSimple() {
         return register( new ConfigManager( FMLPaths.CONFIGDIR.get().toFile() ) );
+    }
+
+    /**
+     * Creates a new config manager that operates directly within the config directory.
+     * This is the recommended method for very simple mods that only need a few options.
+     *
+     * @param modId Your mod's ID. Should match the one in your mod class.
+     *
+     * @return The new config manager.
+     * @throws IllegalStateException If your mod has already created a config manager.
+     */
+    public static ConfigManager createSimple( String modId ) {
+        return register( new ConfigManager( FMLPaths.CONFIGDIR.get().toFile(), modId ) );
     }
     
     /**
@@ -117,14 +134,21 @@ public final class ConfigManager {
     
     /** The current "version" of the dynamic registries. */
     private byte dynamicRegVersion;
-    
+
+    @Deprecated( forRemoval = true )
     private ConfigManager( File configDir ) {
-        MOD_ID = ModLoadingContext.get().getActiveNamespace();
+        this( configDir, ModLoadingContext.get().getActiveNamespace() );
+    }
+
+    private ConfigManager( File configDir, String modId ) {
+        Objects.requireNonNull( modId );
+
+        MOD_ID = modId;
         DIR = configDir;
-        
-        if( MOD_ID.equals( "minecraft" ) )
-            throw new IllegalStateException( "Attempted to create config manager from invalid mod loading context!" );
-        
+
+        if( MOD_ID.isEmpty() || MOD_ID.equals( "minecraft" ) )
+            throw new IllegalStateException( "Attempted to create config manager with invalid modid!" );
+
         MinecraftForge.EVENT_BUS.addListener( this::onResourceReload );
     }
     

@@ -105,16 +105,16 @@ public class Crust {
     public static final DeferredRegister<BlockEntityType<?>> BE_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ICrustApi.MOD_ID);
 
     
-    public Crust() {
+    public Crust(FMLJavaModLoadingContext context) {
         INSTANCE = this;
         apiInstance = new CrustApi();
         ApocalypseDifficultyEnvironment.register( apiInstance );
         CrustPacketHandler.registerMessages();
         
         // Crust's config manager; defines the mod config folder
-        ConfigManager.create( "Crust" );
-        
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ConfigManager.create( "Crust", ICrustApi.MOD_ID );
+
+        IEventBus modBus = context.getModEventBus();
         
         modBus.addListener( CrustPortals::onRegistryCreate );
         CrustEffects.register( modBus );
@@ -134,7 +134,7 @@ public class Crust {
             CrustConfig.initialize();
             
             processPlugins();
-        } );
+        });
     }
     
     private void processPlugins() {
@@ -159,7 +159,7 @@ public class Crust {
                             ex.printStackTrace();
                         }
                     }
-                } ) );
+                }));
     }
     
     public static ResourceLocation resLoc( String path ) { return new ResourceLocation( ICrustApi.MOD_ID, path ); }
