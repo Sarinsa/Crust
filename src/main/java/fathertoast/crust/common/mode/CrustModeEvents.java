@@ -83,7 +83,6 @@ public class CrustModeEvents {
      * Called each player tick. Client event is handled in
      * {@link fathertoast.crust.client.mode.CrustModeClientEvents#onPlayerTick(TickEvent.PlayerTickEvent)}.
      */
-    @SuppressWarnings("JavadocReference")
     @SubscribeEvent
     static void onPlayerTick( TickEvent.PlayerTickEvent event ) {
         if( event.phase != TickEvent.Phase.END || event.side.isClient() ) return;
