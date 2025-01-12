@@ -24,7 +24,7 @@ Discussion: https://discord.gg/GFTzTdX
 [[dependencies.crust]]
 modId = "forge"
 mandatory = true
-versionRange = "[47,)"
+versionRange = "[47.3.10,)"
 ordering = "NONE"
 side = "BOTH"
 
