@@ -1,18 +1,16 @@
 package fathertoast.crust.api.config.common.value;
 
 import fathertoast.crust.api.config.common.file.TomlHelper;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
-// TODO - Tag support (have tags be the lowest priority when finding best match)
 /**
  * A list of entity-value entries used to link one or more numbers to specific entity types.
  */
@@ -22,7 +20,9 @@ public class EntityList implements IStringArray {
     /** The entity-value entries in this list. */
     private final EntityEntry[] ENTRIES;
     /** The entity type tags in this list. */
-    private final List<TagKey<EntityType<?>>> TAGS = new ArrayList<>();
+    private final List<TagEntityEntry> TAG_ENTRIES = new ArrayList<>();
+    /** The namespace entity-value entries in this list. */
+    private final List<NamespaceEntityEntry> NAMESPACE_ENTRIES = new ArrayList<>();
     
     /** The number of values each entry must have. If this is negative, then entries may have any non-zero number of values. */
     private int entryValues = -1;
@@ -46,7 +46,20 @@ public class EntityList implements IStringArray {
      * These parameters can be changed with helper methods that alter the number of values or values' bounds and return 'this'.
      */
     public EntityList( EntityEntry... entries ) { ENTRIES = entries; }
-    
+
+
+    /** Adds the given tag-entries to this entity list. No duplicate checks. */
+    public EntityList addTagEntries( List<TagEntityEntry> tagEntries ) {
+        TAG_ENTRIES.addAll( tagEntries );
+        return this;
+    }
+
+    /** Adds the given namespace-entries to this entity list. No duplicate checks. */
+    public EntityList addNamespaceEntries( List<NamespaceEntityEntry> namespaceEntries ) {
+        NAMESPACE_ENTRIES.addAll( namespaceEntries );
+        return this;
+    }
+
     /** @return A string representation of this object. */
     @Override
     public String toString() { return TomlHelper.toLiteral( toStringList().toArray() ); }
@@ -67,16 +80,34 @@ public class EntityList implements IStringArray {
         for( EntityEntry entry : ENTRIES ) {
             list.add( entry.toString() );
         }
+        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+            list.add( tagEntry.toString() );
+        }
+        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+            list.add( namespaceEntry.toString() );
+        }
         return list;
     }
     
     /** @return True if the entity is contained in this list. */
     public boolean contains( @Nullable Entity entity ) {
         if( entity == null ) return false;
+
         final EntityEntry targetEntry = new EntityEntry( entity );
+
         for( EntityEntry currentEntry : ENTRIES ) {
             currentEntry.checkClass( entity.level() );
             if( currentEntry.contains( targetEntry ) )
+                return true;
+        }
+
+        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+            if ( tagEntry.contains( entity.getType() ) )
+                return true;
+        }
+
+        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+            if ( namespaceEntry.contains( targetEntry ) )
                 return true;
         }
         return false;
@@ -89,8 +120,10 @@ public class EntityList implements IStringArray {
     @Nullable
     public double[] getValues( @Nullable Entity entity ) {
         if( entity == null ) return null;
+
         final EntityEntry targetEntry = new EntityEntry( entity );
         EntityEntry bestMatch = null;
+
         for( EntityEntry currentEntry : ENTRIES ) {
             currentEntry.checkClass( entity.level() );
             // Immediately return if we match the most stringent entry possible
@@ -101,6 +134,16 @@ public class EntityList implements IStringArray {
             else if( currentEntry.contains( targetEntry ) && (bestMatch == null || bestMatch.contains( currentEntry )) ) {
                 bestMatch = currentEntry;
             }
+        }
+        // Check tag entries
+        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+            if ( tagEntry.contains( entity.getType() ) )
+                return tagEntry.VALUES;
+        }
+        // Check namespace entries
+        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+            if ( namespaceEntry.contains( targetEntry ) )
+                return namespaceEntry.VALUES;
         }
         return bestMatch == null ? null : bestMatch.VALUES;
     }

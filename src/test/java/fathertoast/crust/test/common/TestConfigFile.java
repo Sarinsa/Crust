@@ -1,5 +1,6 @@
 package fathertoast.crust.test.common;
 
+import fathertoast.crust.api.ICrustApi;
 import fathertoast.crust.api.config.common.AbstractConfigCategory;
 import fathertoast.crust.api.config.common.AbstractConfigFile;
 import fathertoast.crust.api.config.common.ConfigManager;
@@ -103,9 +104,17 @@ public class TestConfigFile extends AbstractConfigFile {
                             (String[]) null ), General::testCallback ) ).field();
             entityListField = SPEC.define( new InjectionWrapperField<>(
                     new EntityListField( "entity_list", new EntityList(
-                            new EntityEntry( 0.0 ), new EntityEntry( EntityType.CREEPER, true, 1.0 ),
+                            new EntityEntry( 0.0 ),
+                            new EntityEntry( EntityType.CREEPER, true, 1.0 ),
                             new EntityEntry( EntityType.ZOMBIE, false, 2.0 )
-                    ).setSingleValue().setRange( 0.0, 2.0 ),
+                    ).addTagEntries( List.of(
+                            new TagEntityEntry( EntityTypeTags.SKELETONS, 2.0 )
+                            ))
+                    .addNamespaceEntries( List.of(
+                            new NamespaceEntityEntry( ICrustApi.MOD_ID, 2.0 ),
+                            new NamespaceEntityEntry( "minecraft", 1.5 )
+                            ))
+                            .setSingleValue().setRange( 0.0, 2.0 ),
                             (String[]) null ), General::testCallback ) ).field();
             enumField = SPEC.define( new InjectionWrapperField<>(
                     new EnumField<>( "enum", BiomeCategory.NONE,

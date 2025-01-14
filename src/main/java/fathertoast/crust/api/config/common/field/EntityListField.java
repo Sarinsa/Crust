@@ -2,11 +2,18 @@ package fathertoast.crust.api.config.common.field;
 
 import fathertoast.crust.api.config.common.ConfigUtil;
 import fathertoast.crust.api.config.common.file.TomlHelper;
-import fathertoast.crust.api.config.common.value.EntityEntry;
-import fathertoast.crust.api.config.common.value.EntityList;
+import fathertoast.crust.api.config.common.value.*;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.common.Tags;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -31,12 +38,15 @@ public class EntityListField extends GenericField<EntityList> {
                 "'namespace:entity_name'." );
         comment.add( "  '" + REG_KEY_DEFAULT + "' can be used instead of an entity type registry key to provide " +
                 "default values for all entities." );
-        comment.add( "  An asterisk '*' can be used to match multiple entity types. For example, 'minecraft:*' will " +
-                "match all vanilla entities." );
         comment.add( "  List entries by default match any entity type derived from (i.e. based on) their entity type. " +
                 "For example, '~minecraft:zombie'." );
         comment.add( "    There is no steadfast rule about extending, even in vanilla, but the hope is that mod-added " +
                 "mobs will extend their base mob." );
+        comment.add( "  An asterisk '*' can be used to match all entities under a namespace. For example, 'minecraft:*' will " +
+                "match all vanilla entities." );
+        comment.add( "  Entity type tags can also be used here. To declare a tag, start with a '#' followed by the rest of the tag path." );
+        comment.add( "  Tag example: '#minecraft:beehive_inhabitors'");
+        comment.add( "      Priority order: specific entries > tag entries > namespace entries > default" );
         return comment;
     }
     
@@ -51,6 +61,7 @@ public class EntityListField extends GenericField<EntityList> {
         // Number of values to include
         final int reqValues = valueDefault.getRequiredValues();
         final String fieldFormat;
+
         if( reqValues < 0 ) {
             // Variable number of values
             fieldFormat = "[ \"namespace:entity_type value1 value2 ...\", ... ]";
@@ -74,7 +85,6 @@ public class EntityListField extends GenericField<EntityList> {
         if( reqValues != 0 ) {
             comment.add( "   Range for Values: " + TomlHelper.fieldRange( valueDefault.getMinValue(), valueDefault.getMaxValue() ) );
         }
-        
     }
     
     /**
@@ -96,10 +106,25 @@ public class EntityListField extends GenericField<EntityList> {
         else {
             List<String> list = TomlHelper.parseStringList( raw );
             List<EntityEntry> entryList = new ArrayList<>();
+            List<TagEntityEntry> tagEntries = new ArrayList<>();
+            List<NamespaceEntityEntry> namespaceEntries = new ArrayList<>();
+
             for( String line : list ) {
-                entryList.add( parseEntry( line ) );
+                // Handle special case; create an entry for every entity type under the given namespace
+                if ( line.split( " " )[0].endsWith( "*" ) ) {
+                    namespaceEntries.add( parseNamespaceEntry( line ) );
+                }
+                // Check for entity type tags
+                else if ( line.startsWith( "#" ) ) {
+                    tagEntries.add( parseTagEntry( line ) );
+                }
+                else {
+                    entryList.add( parseEntry( line ) );
+                }
             }
             value = new EntityList( entryList );
+            value.addNamespaceEntries( namespaceEntries );
+            value.addTagEntries( tagEntries );
         }
     }
     
@@ -120,6 +145,7 @@ public class EntityListField extends GenericField<EntityList> {
         // Parse the entity-value array
         final String[] args = modifiedLine.split( " " );
         final ResourceLocation regKey;
+
         if( REG_KEY_DEFAULT.equalsIgnoreCase( args[0].trim() ) ) {
             // Handle the special case of a default entry
             regKey = null;
@@ -128,10 +154,62 @@ public class EntityListField extends GenericField<EntityList> {
             // Normal entry
             regKey = new ResourceLocation( args[0].trim() );
         }
+        double[] values = parseValues( line, args );
+
+        return new EntityEntry( this, regKey, extendable, values );
+    }
+
+    /** Parses a single entry line as a tag entry and returns it. */
+    private TagEntityEntry parseTagEntry( String line ) {
+        String[] args = line.split(" ");
+        String tag = args[0].substring( 1 );
+
+        if ( tag.isEmpty() ) {
+            ConfigUtil.LOG.error( "Tried to parse entity tag in EntityList \"{}\", but it was malformed! Expected the format \"#namespace:path\" but got \"{}\"!",
+                    getKey(), line );
+
+            throw new IllegalArgumentException();
+        }
+        ResourceLocation tagLocation = ResourceLocation.tryParse( tag );
+
+        if ( tagLocation == null ) {
+            ConfigUtil.LOG.error( "Tried to parse entity tag in EntityList \"{}\", but it could not be read as a ResourceLocation! Expected the format \"#namespace:path\" but got \"{}\"!",
+                    getKey(), line );
+
+            throw new IllegalArgumentException();
+        }
+        double[] values = parseValues( line, args );
+        return new TagEntityEntry( this, new TagKey<>( Registries.ENTITY_TYPE, tagLocation ), values );
+    }
+
+    /**
+     * Attempts to fetch every entity type from the registry belonging to
+     * a specific namespace and adds new entries for them to the given entry list.
+     *
+     * @throws IllegalArgumentException if the first argument of the line doesn't contain a namespace
+     */
+    private NamespaceEntityEntry parseNamespaceEntry( String line ) {
+        String[] args = line.split(" ");
+        String namespace = args[0].split( ":" )[0];
+
+        if ( namespace == null || namespace.isEmpty() ) {
+            ConfigUtil.LOG.error( "Tried to parse namespace entry in EntityList \"{}\", but it was malformed! Expected the format \"namespace:*\" but got \"{}\"!",
+                    getKey(), line );
+
+            throw new IllegalArgumentException();
+        }
+        double[] values = parseValues( line, args );
+        return new NamespaceEntityEntry( this, namespace, values );
+    }
+
+    /**
+     * Parses the value arguments and returns an array of values.
+     */
+    private double[] parseValues( String line, String[] args ) {
         final List<Double> valuesList = new ArrayList<>();
         final int reqValues = valueDefault.getRequiredValues();
         final int actualValues = args.length - 1;
-        
+
         // Variable-value; just needs at least one value
         if( reqValues < 0 ) {
             if( actualValues < 1 ) {
@@ -159,7 +237,7 @@ public class EntityListField extends GenericField<EntityList> {
                                 "Expected {} values, but detected {}. Deleting additional values. Invalid entry: {}",
                         getClass(), getKey(), reqValues, actualValues, line );
             }
-            
+
             // Parse all values
             for( int i = 1; i < reqValues + 1; i++ ) {
                 if( i < args.length ) {
@@ -170,15 +248,15 @@ public class EntityListField extends GenericField<EntityList> {
                 }
             }
         }
-        
+
         // Convert to array
         final double[] values = new double[valuesList.size()];
         for( int i = 0; i < values.length; i++ ) {
             values[i] = valuesList.get( i );
         }
-        return new EntityEntry( this, regKey, extendable, values );
+        return values;
     }
-    
+
     /** Parses a single value argument and returns a valid result. */
     private double parseValue( final String arg, final String line ) {
         // Try to parse the value
@@ -205,6 +283,7 @@ public class EntityListField extends GenericField<EntityList> {
         }
         return value;
     }
+
     
     
     // Convenience methods
