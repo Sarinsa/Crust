@@ -105,7 +105,7 @@ public class Crust {
     public static final DeferredRegister<BlockEntityType<?>> BE_REGISTRY = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ICrustApi.MOD_ID);
 
     
-    public Crust(FMLJavaModLoadingContext context) {
+    public Crust() {
         INSTANCE = this;
         apiInstance = new CrustApi();
         ApocalypseDifficultyEnvironment.register( apiInstance );
@@ -114,7 +114,7 @@ public class Crust {
         // Crust's config manager; defines the mod config folder
         ConfigManager.create( "Crust", ICrustApi.MOD_ID );
 
-        IEventBus modBus = context.getModEventBus();
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         
         modBus.addListener( CrustPortals::onRegistryCreate );
         CrustEffects.register( modBus );
