@@ -110,7 +110,6 @@ public class RegistryEntryList<T> implements IStringArray {
                 }
             }
         }
-        System.out.println("RegistryEntryList print list: " + PRINT_LIST.toString());
     }
 
     /** Adds the specified tag key to this registry list, unless it already exists in the list. */

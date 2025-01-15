@@ -1,5 +1,6 @@
 package fathertoast.crust.api.config.common.value;
 
+import fathertoast.crust.api.config.common.ConfigUtil;
 import fathertoast.crust.api.config.common.field.AbstractConfigField;
 
 import javax.annotation.Nonnull;
@@ -62,7 +63,7 @@ public class NamespaceEntityEntry {
     public String toString() {
 
         // Start with the entity type registry key
-        StringBuilder str = new StringBuilder( NAMESPACE ).append( ":*" );
+        StringBuilder str = new StringBuilder( ConfigUtil.namespaceWildcard( NAMESPACE ) );
 
         // Append values array
         if( VALUES != null ) {

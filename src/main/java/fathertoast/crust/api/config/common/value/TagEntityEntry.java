@@ -1,5 +1,6 @@
 package fathertoast.crust.api.config.common.value;
 
+import fathertoast.crust.api.config.common.ConfigUtil;
 import fathertoast.crust.api.config.common.field.AbstractConfigField;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -62,7 +63,7 @@ public class TagEntityEntry {
     public String toString() {
 
         // Start with the entity type registry key
-        StringBuilder str = new StringBuilder( "#" ).append( TAG.location() );
+        StringBuilder str = new StringBuilder( ConfigUtil.toString( TAG ) );
 
         // Append values array
         if( VALUES != null ) {
