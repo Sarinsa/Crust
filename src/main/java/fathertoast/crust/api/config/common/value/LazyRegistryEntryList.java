@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 
 /**
  * A list of entries used to match registry entries. Can safely be loaded before its target registry is loaded, but
- * is not able to error check as well. Note that any tags that may be added will not go through any validation.
+ * is not able to error check as well. Note that any tags that may be added will not have their existence verified on the server.
  * <p>
  * See also: {@link net.minecraftforge.registries.ForgeRegistries}
  */

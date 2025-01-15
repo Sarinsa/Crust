@@ -21,8 +21,8 @@ public class BlockListField extends GenericField<BlockList> {
         comment.add( "  Block lists are arrays of blocks and partial block states." );
         comment.add( "  Blocks are defined by their key in the block registry, usually following the pattern " +
                 "'namespace:block_name'." );
-        comment.add( "  An asterisk '*' can be used to match all registry entries belonging to X namespace. For example, 'minecraft:*' will " +
-                "match all vanilla entries." );
+        comment.add( "  An asterisk '*' can be used to match all blocks belonging to X namespace. For example, 'minecraft:*' will " +
+                "match all vanilla blocks." );
         comment.add( "  Block tags can also be used here. To declare a tag, start with a '#' followed by the rest of the tag path." );
         comment.add( "  Tag example: '#minecraft:beehive_inhabitors'");
         comment.add( "  List entries by default match any block state. The block states to match can be narrowed down " +
