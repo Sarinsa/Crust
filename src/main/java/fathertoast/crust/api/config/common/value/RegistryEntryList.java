@@ -29,6 +29,8 @@ public class RegistryEntryList<T> implements IStringArray {
     protected final Set<T> UNDERLYING_SET = new HashSet<>();
     /** The tags in this list. */
     private final List<TagKey<T>> TAGS = new ArrayList<>();
+    /** Entire namespaces specified in this list. */
+    private final List<String> NAMESPACES = new ArrayList<>();
     /** The list used to write back to file. */
     protected final List<String> PRINT_LIST = new ArrayList<>();
     
@@ -54,9 +56,14 @@ public class RegistryEntryList<T> implements IStringArray {
      * This method of creation can not take advantage of the * notation.
      */
     @SafeVarargs
-    public RegistryEntryList( IForgeRegistry<T> registry, List<TagKey<T>> tags, T... entries ) {
+    public RegistryEntryList( IForgeRegistry<T> registry, @Nullable List<String> namespaces, @Nullable List<TagKey<T>> tags, T... entries ) {
         this( registry, entries );
-        tags( tags );
+
+        if ( tags != null )
+            tags( tags );
+
+        if ( namespaces != null )
+            namespaces( namespaces );
     }
     
     /**
@@ -76,16 +83,20 @@ public class RegistryEntryList<T> implements IStringArray {
                 }
                 else {
                     tag( new TagKey<>( registry.getRegistryKey(), tagLocation ) );
+                    PRINT_LIST.add( line );
                 }
             }
             else if( line.endsWith( "*" ) ) {
-                // Handle special case; add all entries in namespace
-                if( !mergeFromNamespace( line.substring( 0, line.length() - 1 ) ) ) {
-                    // Don't delete this kind of entry
-                    ConfigUtil.LOG.warn( "Namespace entry for {} \"{}\" did not match anything! Questionable entry: {}",
+                String[] parts = line.split( ":" );
+
+                if ( parts[0].isEmpty() ) {
+                    ConfigUtil.LOG.warn( "Invalid namespace entry for {} \"{}\"! Skipping. Invalid namespace entry: {}",
                             field.getClass(), field.getKey(), line );
                 }
-                PRINT_LIST.add( line );
+                else {
+                    namespace( parts[0] );
+                    PRINT_LIST.add( line );
+                }
             }
             else {
                 // Add a single registry entry
@@ -99,6 +110,7 @@ public class RegistryEntryList<T> implements IStringArray {
                 }
             }
         }
+        System.out.println("RegistryEntryList print list: " + PRINT_LIST.toString());
     }
 
     /** Adds the specified tag key to this registry list, unless it already exists in the list. */
@@ -124,15 +136,42 @@ public class RegistryEntryList<T> implements IStringArray {
         for ( TagKey<T> tag : tags )
             tag( tag );
     }
+
+    /** Adds the specified namespace to the list, unless it already exists in the list. */
+    public final void namespace( String namespace ) {
+        boolean exists = false;
+
+        for ( String s : NAMESPACES ) {
+            if ( s.equals( namespace ) ) {
+                exists = true;
+                break;
+            }
+        }
+        if ( !exists ) {
+            NAMESPACES.add( namespace );
+        }
+    }
+
+    /** Adds the specified namespace strings to this registry list. */
+    public final void namespaces( Collection<String> namespaces ) {
+        if ( namespaces.isEmpty() ) return;
+
+        for ( String s : namespaces ) {
+            namespace( s );
+        }
+    }
     
     /** @return The registry this list draws from. */
     public IForgeRegistry<T> getRegistry() { return REGISTRY; }
     
-    /** @return The entries in this list, except tags. */
+    /** @return The entries in this list, except tags and namespaces. */
     public Set<T> getEntries() { return Collections.unmodifiableSet( UNDERLYING_SET ); }
 
     /** @return A list of tag keys in this list. */
     public List<TagKey<T>> getTags() { return Collections.unmodifiableList( TAGS ); }
+
+    /** @return A list of specified namespaces in this list. */
+    public List<String> getNamespaces() { return Collections.unmodifiableList( NAMESPACES ); }
     
     /** @return A string representation of this object. */
     @Override
@@ -152,15 +191,28 @@ public class RegistryEntryList<T> implements IStringArray {
     public List<String> toStringList() { return PRINT_LIST; }
     
     /** @return Returns true if there are no entries in this list. */
-    public boolean isEmpty() { return UNDERLYING_SET.isEmpty() && TAGS.isEmpty(); }
+    public boolean isEmpty() { return UNDERLYING_SET.isEmpty() && TAGS.isEmpty() && NAMESPACES.isEmpty(); }
     
-    /** @return Returns true if the entry is contained in this list. */
+    /**
+     * @return Returns true if the entry is contained in this list.<br></br>
+     *         Use {@link RegistryEntryList#containsOrTag(Object, Predicate)} to check against tags as well.
+     */
     public boolean contains( @Nullable T entry ) {
-        return UNDERLYING_SET.contains( entry ); }
+        if ( UNDERLYING_SET.contains( entry ) )
+            return true;
+
+        if ( REGISTRY.getKey( entry ) != null ) {
+            for ( String namespace : NAMESPACES ) {
+                if ( namespace.equals( REGISTRY.getKey( entry ).getNamespace() ) )
+                    return true;
+            }
+        }
+        return false;
+    }
 
     /** @return Returns true if the entry is contained in this list, also checking against tags. */
     public boolean containsOrTag( @Nullable T entry, Predicate<TagKey<T>> tagPredicate ) {
-        if (contains( entry )) return true;
+        if ( contains( entry ) ) return true;
 
         for ( TagKey<T> tagKey : TAGS ) {
             if ( tagPredicate.test(tagKey) ) return true;
@@ -172,19 +224,5 @@ public class RegistryEntryList<T> implements IStringArray {
     protected boolean mergeFrom( ResourceLocation regKey ) {
         final T entry = REGISTRY.getValue( regKey );
         return entry != null && UNDERLYING_SET.add( entry );
-    }
-    
-    /**
-     * @param namespace Merges all registry entries with keys that start with a namespace into this list.
-     * @return True if any registry entries were actually added.
-     */
-    protected boolean mergeFromNamespace( String namespace ) {
-        boolean foundAny = false;
-        for( ResourceLocation regKey : REGISTRY.getKeys() ) {
-            if( regKey.toString().startsWith( namespace ) ) {
-                if( mergeFrom( regKey ) ) foundAny = true;
-            }
-        }
-        return foundAny;
     }
 }
