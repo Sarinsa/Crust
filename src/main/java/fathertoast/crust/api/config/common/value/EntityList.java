@@ -1,7 +1,9 @@
 package fathertoast.crust.api.config.common.value;
 
 import fathertoast.crust.api.config.common.file.TomlHelper;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -48,15 +50,41 @@ public class EntityList implements IStringArray {
     public EntityList( EntityEntry... entries ) { ENTRIES = entries; }
 
 
-    /** Adds the given tag-entries to this entity list. No duplicate checks. */
+    /** Adds the given tag-entries to this entity list. Discards duplicates. */
     public EntityList addTagEntries( List<TagEntityEntry> tagEntries ) {
-        TAG_ENTRIES.addAll( tagEntries );
+        for ( TagEntityEntry entry : tagEntries ) {
+            TagKey<EntityType<?>> tagKey = entry.TAG;
+            boolean exists = false;
+
+            for ( TagEntityEntry existingEntry : TAG_ENTRIES ) {
+                if ( existingEntry.TAG.location().equals( tagKey.location() ) ) {
+                    exists = true;
+                    break;
+                }
+            }
+            if ( !exists ) {
+                TAG_ENTRIES.add( entry );
+            }
+        }
+
         return this;
     }
 
-    /** Adds the given namespace-entries to this entity list. No duplicate checks. */
+    /** Adds the given namespace-entries to this entity list. Discards duplicates. */
     public EntityList addNamespaceEntries( List<NamespaceEntityEntry> namespaceEntries ) {
-        NAMESPACE_ENTRIES.addAll( namespaceEntries );
+        for ( NamespaceEntityEntry entry : namespaceEntries ) {
+            String namespace = entry.NAMESPACE;
+            boolean exists = false;
+
+             for ( NamespaceEntityEntry existingEntry : NAMESPACE_ENTRIES ) {
+                 if ( existingEntry.NAMESPACE.equals( namespace ) ) {
+                     exists = true;
+                     break;
+                 }
+             }
+             if ( !exists )
+                 NAMESPACE_ENTRIES.add( entry );
+        }
         return this;
     }
 

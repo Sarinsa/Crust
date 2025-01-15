@@ -42,8 +42,8 @@ public class EntityListField extends GenericField<EntityList> {
                 "For example, '~minecraft:zombie'." );
         comment.add( "    There is no steadfast rule about extending, even in vanilla, but the hope is that mod-added " +
                 "mobs will extend their base mob." );
-        comment.add( "  An asterisk '*' can be used to match all entities under a namespace. For example, 'minecraft:*' will " +
-                "match all vanilla entities." );
+        comment.add( "  An asterisk '*' can be used to match all registry entries belonging to X namespace. For example, 'minecraft:*' will " +
+                "match all vanilla entries." );
         comment.add( "  Entity type tags can also be used here. To declare a tag, start with a '#' followed by the rest of the tag path." );
         comment.add( "  Tag example: '#minecraft:beehive_inhabitors'");
         comment.add( "      Priority order: specific entries > tag entries > namespace entries > default" );
@@ -179,6 +179,7 @@ public class EntityListField extends GenericField<EntityList> {
             throw new IllegalArgumentException();
         }
         double[] values = parseValues( line, args );
+
         return new TagEntityEntry( this, new TagKey<>( Registries.ENTITY_TYPE, tagLocation ), values );
     }
 

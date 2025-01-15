@@ -94,7 +94,10 @@ public final class ConfigUtil {
     public static String toString( @Nullable ResourceLocation res ) { return res == null ? "null" : res.toString(); }
 
     /** @return Returns the tag key as a string, or "null" if it is null. */
-    public static String toString( @Nullable TagKey<?> tagKey ) { return tagKey == null ? "null" : ("#" + tagKey.location() ); }
+    public static String toString( @Nullable TagKey<?> tagKey ) { return tagKey == null ? "null" : ( "#" + tagKey.location() ); }
+
+    /** @return Returns the given String as a config-recognizable namespace wildcard. */
+    public static String namespaceWildcard( @Nullable String namespaceWildcard ) { return namespaceWildcard == null ? "null" : ( namespaceWildcard + ":*" ); }
     
     /**
      * @param str    The string we wish to wrap.

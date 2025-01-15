@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
- * This entity entry covers all entity types under a given mod namespace.
+ * Entity list entry that covers all entity types under a given mod namespace.
  * It is intended to have the lowest priority in an entity list when finding best match.
  */
 public class NamespaceEntityEntry {
