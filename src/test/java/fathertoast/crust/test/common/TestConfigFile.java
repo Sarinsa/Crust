@@ -86,6 +86,7 @@ public class TestConfigFile extends AbstractConfigFile {
                             (String[]) null ), General::testCallback ) ).field();
             blockListField = SPEC.define( new InjectionWrapperField<>(
                     new BlockListField( "block_list", new BlockList(
+                            List.of( "crust" ),
                             List.of( BlockTags.ENDERMAN_HOLDABLE ),
                             new BlockEntry( Blocks.GRASS_BLOCK ),
                             new BlockEntry( Blocks.FURNACE.defaultBlockState().setValue( AbstractFurnaceBlock.LIT, true ) ) ),
@@ -134,11 +135,17 @@ public class TestConfigFile extends AbstractConfigFile {
                             (String[]) null ), General::testCallback ) ).field();
             registryEntryListField = SPEC.define( new InjectionWrapperField<>(
                     new RegistryEntryListField<>( "registry_entry_list",
-                            new RegistryEntryList<>( ForgeRegistries.ENTITY_TYPES, List.of( EntityTypeTags.FALL_DAMAGE_IMMUNE ), EntityType.SHEEP, EntityType.ALLAY ),
+                            new RegistryEntryList<>( ForgeRegistries.ENTITY_TYPES,
+                                    List.of( ICrustApi.MOD_ID ),
+                                    List.of( EntityTypeTags.FALL_DAMAGE_IMMUNE ),
+                                    EntityType.SHEEP, EntityType.ALLAY ),
                             (String[]) null ), General::testCallback ) ).field();
             lazyRegistryEntryListField = SPEC.define( new InjectionWrapperField<>(
                     new LazyRegistryEntryListField<>( "lazy_registry_entry_list",
-                            new LazyRegistryEntryList<>( ForgeRegistries.MOB_EFFECTS, true, MobEffects.CONFUSION ),
+                            new LazyRegistryEntryList<>( ForgeRegistries.MOB_EFFECTS, true,
+                                    List.of( "minecraft" ),
+                                    null,
+                                    MobEffects.CONFUSION ),
                             (String[]) null ), General::testCallback ) ).field();
             scaledDoubleField = SPEC.define( new InjectionWrapperField<>(
                     new ScaledDoubleField( "scaled_double", 1.0, 6.0, DoubleField.Range.ANY,
