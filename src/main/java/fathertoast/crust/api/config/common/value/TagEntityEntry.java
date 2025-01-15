@@ -10,6 +10,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
+/**
+ * Tag entry for entity lists. Provides values for any entity type contained in a given tag.
+ */
 public class TagEntityEntry {
 
     /** The field containing this entry. We save a reference to help improve error/warning reports. */
