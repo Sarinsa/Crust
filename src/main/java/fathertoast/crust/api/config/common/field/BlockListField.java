@@ -21,12 +21,16 @@ public class BlockListField extends GenericField<BlockList> {
         comment.add( "  Block lists are arrays of blocks and partial block states." );
         comment.add( "  Blocks are defined by their key in the block registry, usually following the pattern " +
                 "'namespace:block_name'." );
-        comment.add( "  An asterisk '*' can be used to match multiple blocks. For example, 'minecraft:*' will match " +
-                "all vanilla blocks." );
+        comment.add( "  An asterisk '*' can be used to match all registry entries belonging to X namespace. For example, 'minecraft:*' will " +
+                "match all vanilla entries." );
+        comment.add( "  Block tags can also be used here. To declare a tag, start with a '#' followed by the rest of the tag path." );
+        comment.add( "  Tag example: '#minecraft:beehive_inhabitors'");
         comment.add( "  List entries by default match any block state. The block states to match can be narrowed down " +
                 "by specifying properties. The syntax for block state properties is the same as for commands. Any " +
                 "properties not specified will match any value. For example, 'minecraft:beehive[honey_level=5]' will " +
                 "match any full beehives, regardless of the direction they face." );
+        comment.add( "  Note that tags and namespace entries are not block state sensitive; they only care about the base block" );
+        comment.add( "      Priority order: specific entries > tag entries > namespace entries > default" );
         return comment;
     }
     
@@ -67,10 +71,10 @@ public class BlockListField extends GenericField<BlockList> {
     // Convenience methods
     
     /**
-     *  @return Returns true if there are no entries in this block list.
-     *          Optionally checks if there are no tags as well if checkTags is true.
+     *  @return Returns true if there are no entries in this block list,
+     *          including tag and namespace entries.
      */
-    public boolean isEmpty( boolean checkTags ) { return get().isEmpty( checkTags ); }
+    public boolean isEmpty() { return get().isEmpty(); }
     
     /** @return Returns true if the block is contained in this list. */
     public boolean matches( BlockState blockState ) { return get().matches( blockState ); }
@@ -91,8 +95,8 @@ public class BlockListField extends GenericField<BlockList> {
             BLACKLIST = blacklist;
         }
         
-        /** @return Returns true if there are no entries in this block list. */
-        public boolean isEmpty( boolean checkTags ) { return WHITELIST.get().isEmpty( checkTags ); }
+        /** @return Returns true if there are no entries of any kind in this block list. */
+        public boolean isEmpty() { return WHITELIST.get().isEmpty(); }
         
         /** @return Returns true if the block is contained in this list. */
         public boolean matches( BlockState blockState ) {

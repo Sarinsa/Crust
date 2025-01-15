@@ -24,7 +24,12 @@ public class BlockList implements IStringArray {
     private final Map<Block, BlockEntry> UNDERLYING_MAP = new HashMap<>();
     /** The block tags in this list. */
     private final List<TagKey<Block>> TAGS = new ArrayList<>();
-    /** The list used to write back to file. Consists of cloned single-state block entries. */
+    /** The namespace entries in this list */
+    private final List<String> NAMESPACES = new ArrayList<>();
+    /**
+     * The list used to write block entries back to file (tag and namespace entries are handled separately).
+     * Consists of cloned single-state block entries.
+     */
     private final List<BlockEntry> PRINT_LIST = new ArrayList<>();
     
     /**
@@ -44,9 +49,15 @@ public class BlockList implements IStringArray {
      * <p>
      * This method of block list creation can not take advantage of the * notation.
      */
-    public BlockList( List<TagKey<Block>> tags, BlockEntry... entries ) {
+    public BlockList( @Nullable List<String> namespaces, @Nullable List<TagKey<Block>> tags, BlockEntry... entries ) {
         this( entries );
-        tags( tags );
+
+        if ( tags != null )
+            tags( tags );
+
+        if ( namespaces != null ) {
+            namespaces( namespaces );
+        }
     }
     
     /**
@@ -68,8 +79,15 @@ public class BlockList implements IStringArray {
                 }
             }
             else if( line.endsWith( "*" ) ) {
-                // Handle special case; add all blocks in namespace
-                mergeFromNamespace( line.substring( 0, line.length() - 1 ) );
+                String[] parts = line.split( ":" );
+
+                if ( parts[0].isEmpty() ) {
+                    ConfigUtil.LOG.warn( "Invalid namespace entry for {} \"{}\"! Skipping. Invalid namespace entry: {}",
+                            field.getClass(), field.getKey(), line );
+                }
+                else {
+                    namespace( parts[0] );
+                }
             }
             else {
                 // Add a single block entry
@@ -108,6 +126,30 @@ public class BlockList implements IStringArray {
         for ( TagKey<Block> tag : tags )
             tag( tag );
     }
+
+    /** Adds the specified namespace entry to this BlockList, unless it already exists in the list. */
+    public final BlockList namespace( String namespace ) {
+        boolean exists = false;
+
+        for ( String s : NAMESPACES ) {
+            if ( s.equals( namespace ) ) {
+                exists = true;
+                break;
+            }
+        }
+        if ( !exists ) {
+            NAMESPACES.add( namespace );
+        }
+        return this;
+    }
+
+    /** Adds the specified namespace entries to this BlockList. */
+    public final void namespaces( Collection<String> namespaces ) {
+        if ( namespaces.isEmpty() ) return;
+
+        for ( String namespace : namespaces )
+            namespace( namespace );
+    }
     
     /** @return A string representation of this object. */
     @Override
@@ -132,24 +174,33 @@ public class BlockList implements IStringArray {
         for ( TagKey<Block> tagKey : TAGS ) {
             list.add( ConfigUtil.toString( tagKey ) );
         }
+        for ( String namespace : NAMESPACES ) {
+            list.add( ConfigUtil.namespaceWildcard( namespace ) );
+        }
         return list;
     }
     
-    /** @return Returns true if there are no entries in this block list. */
-    public boolean isEmpty( boolean checkTags ) {
-        return checkTags
-            ? (UNDERLYING_MAP.isEmpty() && TAGS.isEmpty())
-            : UNDERLYING_MAP.isEmpty();
+    /** @return Returns true if there are no entries in this block list, including tag and namespace entries. */
+    public boolean isEmpty() {
+        return UNDERLYING_MAP.isEmpty() && TAGS.isEmpty() && NAMESPACES.isEmpty();
     }
     
     /** @return Returns true if the block is contained in this list. Prioritizes unique entries over tags. */
     public boolean matches( BlockState blockState ) {
-        // Check entries before tags
+        // Regular entries
         BlockEntry entry = UNDERLYING_MAP.get( blockState.getBlock() );
         if ( entry != null ) return entry.matches( blockState );
 
+        // Check tags
         for ( TagKey<Block> tagKey : TAGS ) {
             if ( blockState.is( tagKey ) )
+                return true;
+        }
+        String namespace = ForgeRegistries.BLOCKS.getKey( blockState.getBlock() ).getNamespace();
+
+        // Check namespace wildcards
+        for ( String ns : NAMESPACES ) {
+            if ( namespace.equals( ns ) )
                 return true;
         }
         return false;
@@ -159,22 +210,12 @@ public class BlockList implements IStringArray {
     private void mergeFrom( BlockEntry otherEntry ) {
         PRINT_LIST.add( otherEntry );
         BlockEntry currentEntry = UNDERLYING_MAP.get( otherEntry.BLOCK );
+
         if( currentEntry == null ) {
             UNDERLYING_MAP.put( otherEntry.BLOCK, otherEntry );
         }
         else {
             currentEntry.mergeFrom( otherEntry );
-        }
-    }
-    
-    /** @param namespace Merges all blocks (and all states) with registry keys that begin with this string into this list. */
-    private void mergeFromNamespace( String namespace ) {
-        for( ResourceLocation regKey : ForgeRegistries.BLOCKS.getKeys() ) {
-            if( regKey.toString().startsWith( namespace ) ) {
-                final Block block = ForgeRegistries.BLOCKS.getValue( regKey );
-                if( block != null && block != Blocks.AIR )
-                    mergeFrom( new BlockEntry( block ) );
-            }
         }
     }
 }
