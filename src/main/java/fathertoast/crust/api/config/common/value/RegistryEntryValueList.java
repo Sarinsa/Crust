@@ -60,7 +60,7 @@ public class RegistryEntryValueList<T> implements IStringArray {
     }
 
 
-    /** Adds the given tag-entries to this entity list. Discards duplicates. */
+    /** Adds the given tag-entries to this list. Discards duplicates. */
     public RegistryEntryValueList<T> addTagEntries( List<RegistryValueTagEntry<T>> tagEntries ) {
         for ( RegistryValueTagEntry<T> entry : tagEntries ) {
             TagKey<T> tagKey = entry.TAG;
@@ -79,7 +79,7 @@ public class RegistryEntryValueList<T> implements IStringArray {
         return this;
     }
 
-    /** Adds the given namespace-entries to this entity list. Discards duplicates. */
+    /** Adds the given namespace-entries to this list. Discards duplicates. */
     public RegistryEntryValueList<T> addNamespaceEntries( List<NamespaceRegistryEntry> namespaceEntries ) {
         for ( NamespaceRegistryEntry entry : namespaceEntries ) {
             String namespace = entry.NAMESPACE;
@@ -139,7 +139,7 @@ public class RegistryEntryValueList<T> implements IStringArray {
         return list;
     }
 
-    /** @return True if the entity is contained in this list. Optionally checks tags. */
+    /** @return True if the object is contained in this list. Optionally checks tags. */
     public boolean contains( @Nullable T registryObject, @Nullable Predicate<TagKey<T>> tagCheck ) {
         if( registryObject == null ) return false;
 
@@ -166,7 +166,9 @@ public class RegistryEntryValueList<T> implements IStringArray {
 
     /**
      * @param registryObject The registry object to retrieve values for.
-     * @return The array of values of the best-match entry. Returns null if the entity is not contained in this entity list.
+     * @param tagCheck Optional tag check logic.
+     *
+     * @return The array of values of the best-match entry. Returns null if the object is not contained in this list.
      */
     @Nullable
     public double[] getValues( @Nullable T registryObject, @Nullable Predicate<TagKey<T>> tagCheck ) {
@@ -196,8 +198,10 @@ public class RegistryEntryValueList<T> implements IStringArray {
 
     /**
      * @param registryObject The registry object to retrieve a value for.
-     * @return The first value in the best-match entry's value array. Returns 0 if the entity is not contained in this
-     * entity list or has no values specified. This should only be used for 'single value' lists.
+     * @param tagCheck Optional tag check logic.
+     *
+     * @return The first value in the best-match entry's value array. Returns 0 if the object is not contained in this
+     * list or has no values specified. This should only be used for 'single value' lists.
      * @see #setSingleValue()
      * @see #setSinglePercent()
      */
@@ -208,24 +212,26 @@ public class RegistryEntryValueList<T> implements IStringArray {
 
     /**
      * @param registryObject The registry object to roll a value for.
-     * @return Randomly rolls the first percentage value in the best-match entry's value array. Returns false if the entity
-     * is not contained in this entity list or has no values specified. This should only be used for 'single percent' lists.
+     * @param tagCheck Optional tag check logic.
+     *
+     * @return Randomly rolls the first percentage value in the best-match entry's value array. Returns false if the object
+     * is not contained in this list or has no values specified. This should only be used for 'single percent' lists.
      * @see #setSinglePercent()
      */
     public boolean rollChance( @Nullable T registryObject, RandomSource random, @Nullable Predicate<TagKey<T>> tagCheck ) {
         return ENTRIES.length > 0 && registryObject != null && random.nextDouble() < getValue( registryObject, tagCheck );
     }
 
-    /** Marks this entity list as a simple percentage listing; exactly one percent (0 to 1) per entry. */
+    /** Marks this list as a simple percentage listing; exactly one percent (0 to 1) per entry. */
     public RegistryEntryValueList<T> setSinglePercent() { return setSingleValue().setRange0to1(); }
 
-    /** Marks this entity list as identification only; no values will be linked to any entries. */
+    /** Marks this list as identification only; no values will be linked to any entries. */
     public RegistryEntryValueList<T> setNoValues() { return setMultiValue( 0 ); }
 
-    /** Marks this entity list as single-value; each entry will have exactly one value. */
+    /** Marks this list as single-value; each entry will have exactly one value. */
     public RegistryEntryValueList<T> setSingleValue() { return setMultiValue( 1 ); }
 
-    /** Marks this entity list as multi-value; each entry will have the specified number of values. */
+    /** Marks this list as multi-value; each entry will have the specified number of values. */
     public RegistryEntryValueList<T> setMultiValue( int numberOfValues ) {
         entryValues = numberOfValues;
         return this;
