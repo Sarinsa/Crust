@@ -8,6 +8,7 @@ import fathertoast.crust.api.config.common.field.*;
 import fathertoast.crust.api.config.common.value.*;
 import fathertoast.crust.api.config.common.value.environment.CrustEnvironmentRegistry;
 import fathertoast.crust.api.config.common.value.environment.biome.BiomeCategory;
+import fathertoast.crust.api.config.common.value.environment.biome.BiomeEnvironment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.EntityTypeTags;
@@ -63,12 +64,13 @@ public class TestConfigFile extends AbstractConfigFile {
         public final EnvironmentListField environmentListField;
         public final IntField intField;
         public final RegistryEntryListField<EntityType<?>> registryEntryListField;
+        public final RegistryEntryValueListField<MobEffect> registryEntryValueListField;
         public final LazyRegistryEntryListField<MobEffect> lazyRegistryEntryListField;
         public final ScaledDoubleField scaledDoubleField;
         public final SqrDoubleField sqrDoubleField;
         public final StringField stringField;
         public final StringListField stringListField;
-        
+
         General( TestConfigFile parent ) {
             super( parent, "general", generateFormatTest() );
             
@@ -109,11 +111,11 @@ public class TestConfigFile extends AbstractConfigFile {
                             new EntityEntry( EntityType.CREEPER, true, 1.0 ),
                             new EntityEntry( EntityType.ZOMBIE, false, 2.0 )
                     ).addTagEntries( List.of(
-                            new TagEntityEntry( EntityTypeTags.SKELETONS, 2.0 )
+                            new EntityTagEntry( EntityTypeTags.SKELETONS, 2.0 )
                             ))
                     .addNamespaceEntries( List.of(
-                            new NamespaceEntityEntry( ICrustApi.MOD_ID, 2.0 ),
-                            new NamespaceEntityEntry( "minecraft", 1.5 )
+                            new NamespaceRegistryEntry( ICrustApi.MOD_ID, 2.0 ),
+                            new NamespaceRegistryEntry( "minecraft", 1.5 )
                             ))
                             .setSingleValue().setRange( 0.0, 2.0 ),
                             (String[]) null ), General::testCallback ) ).field();
@@ -140,6 +142,13 @@ public class TestConfigFile extends AbstractConfigFile {
                                     List.of( EntityTypeTags.FALL_DAMAGE_IMMUNE ),
                                     EntityType.SHEEP, EntityType.ALLAY ),
                             (String[]) null ), General::testCallback ) ).field();
+            registryEntryValueListField = SPEC.define(
+                    new RegistryEntryValueListField<>( "registry_entry_value_list",
+                            new RegistryEntryValueList<>( () -> ForgeRegistries.MOB_EFFECTS,
+                                    new RegistryValueEntry<>( ForgeRegistries.MOB_EFFECTS.getKey( MobEffects.CONFUSION ), 1.2 ),
+                                    new RegistryValueEntry<>( ForgeRegistries.MOB_EFFECTS.getKey( MobEffects.ABSORPTION ), 2.0 )
+                            ).setSingleValue()
+                    ));
             lazyRegistryEntryListField = SPEC.define( new InjectionWrapperField<>(
                     new LazyRegistryEntryListField<>( "lazy_registry_entry_list",
                             new LazyRegistryEntryList<>( ForgeRegistries.MOB_EFFECTS, true,

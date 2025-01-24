@@ -28,6 +28,6 @@ public class BiomeEnvironment extends DynamicRegistryEnvironment<Biome> {
     @Override
     public boolean matches( ServerLevel level, @Nullable BlockPos pos ) {
         final Biome entry = getRegistryEntry( level );
-        return (entry != null && pos != null && entry.equals( level.getBiome( pos ).value() )) != INVERT;
+        return ( entry != null && pos != null && entry.equals( level.getBiome( pos ).value() )) != INVERT;
     }
 }

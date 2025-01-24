@@ -5,15 +5,9 @@ import fathertoast.crust.api.config.common.file.TomlHelper;
 import fathertoast.crust.api.config.common.value.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -106,8 +100,8 @@ public class EntityListField extends GenericField<EntityList> {
         else {
             List<String> list = TomlHelper.parseStringList( raw );
             List<EntityEntry> entryList = new ArrayList<>();
-            List<TagEntityEntry> tagEntries = new ArrayList<>();
-            List<NamespaceEntityEntry> namespaceEntries = new ArrayList<>();
+            List<EntityTagEntry> tagEntries = new ArrayList<>();
+            List<NamespaceRegistryEntry> namespaceEntries = new ArrayList<>();
 
             for( String line : list ) {
                 // Handle special case; create an entry for every entity type under the given namespace
@@ -160,7 +154,7 @@ public class EntityListField extends GenericField<EntityList> {
     }
 
     /** Parses a single entry line as a tag entry and returns it. */
-    private TagEntityEntry parseTagEntry( String line ) {
+    private EntityTagEntry parseTagEntry(String line ) {
         String[] args = line.split(" ");
         String tag = args[0].substring( 1 );
 
@@ -180,7 +174,7 @@ public class EntityListField extends GenericField<EntityList> {
         }
         double[] values = parseValues( line, args );
 
-        return new TagEntityEntry( this, new TagKey<>( Registries.ENTITY_TYPE, tagLocation ), values );
+        return new EntityTagEntry( this, new TagKey<>( Registries.ENTITY_TYPE, tagLocation ), values );
     }
 
     /**
@@ -189,7 +183,7 @@ public class EntityListField extends GenericField<EntityList> {
      *
      * @throws IllegalArgumentException if the first argument of the line doesn't contain a namespace
      */
-    private NamespaceEntityEntry parseNamespaceEntry( String line ) {
+    private NamespaceRegistryEntry parseNamespaceEntry(String line ) {
         String[] args = line.split(" ");
         String namespace = args[0].split( ":" )[0];
 
@@ -200,7 +194,7 @@ public class EntityListField extends GenericField<EntityList> {
             throw new IllegalArgumentException();
         }
         double[] values = parseValues( line, args );
-        return new NamespaceEntityEntry( this, namespace, values );
+        return new NamespaceRegistryEntry( this, namespace, values );
     }
 
     /**

@@ -8,15 +8,14 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
- * Entity list entry that covers all entity types under a given mod namespace.
- * It is intended to have the lowest priority in an entity list when finding best match.
+ * Registry entry that covers all IDs under a given mod namespace.
  */
-public class NamespaceEntityEntry {
+public class NamespaceRegistryEntry {
 
     /** The field containing this entry. We save a reference to help improve error/warning reports. */
     private final AbstractConfigField FIELD;
 
-    /** The registry key for this entry's entity type. */
+    /** The namespace covered by this entry. */
     public final String NAMESPACE;
 
     /** The values given to this entry. Null for comparison objects. */
@@ -25,12 +24,12 @@ public class NamespaceEntityEntry {
 
 
     /** Creates an entry with the specified values. Used for creating default configs. */
-    public NamespaceEntityEntry( @Nonnull String namespace, double... values ) {
+    public NamespaceRegistryEntry(@Nonnull String namespace, double... values ) {
         this( null, namespace, values );
     }
 
     /** Creates an entry with the specified values. */
-    public NamespaceEntityEntry( @Nullable AbstractConfigField field, @Nonnull String namespace, double... values ) {
+    public NamespaceRegistryEntry(@Nullable AbstractConfigField field, @Nonnull String namespace, double... values ) {
         Objects.requireNonNull( namespace );
 
         FIELD = field;
@@ -48,21 +47,20 @@ public class NamespaceEntityEntry {
     /**
      * @return Returns true if the given entry's registry key matches the namespace of this namespace-entry.
      */
-    public boolean contains( EntityEntry entry ) {
+    public boolean contains( String namespace ) {
         if( !validate() ) return false;
 
-        return entry.ENTITY_KEY.getNamespace().equals( NAMESPACE );
+        return namespace.equals( NAMESPACE );
     }
 
     /**
-     * @return The string representation of this entity list multi-entry, as it would appear in a config file.
+     * @return The string representation of this namespace registry entry, as it would appear in a config file.
      * <p>
      * Format is "namespace:* value0 value1 ...".
      */
     @Override
     public String toString() {
-
-        // Start with the entity type registry key
+        // Start with the namespace wildcard string
         StringBuilder str = new StringBuilder( ConfigUtil.namespaceWildcard( NAMESPACE ) );
 
         // Append values array

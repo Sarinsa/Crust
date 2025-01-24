@@ -33,13 +33,12 @@ public class RegistryEntryList<T> implements IStringArray {
     private final List<String> NAMESPACES = new ArrayList<>();
     /** The list used to write back to file. */
     protected final List<String> PRINT_LIST = new ArrayList<>();
-    
+
+
     protected RegistryEntryList( IForgeRegistry<T> registry ) { REGISTRY = registry; }
     
     /**
      * Create a new registry entry list from an array of entries. Used for creating default configs.
-     * <p>
-     * This method of creation can not take advantage of the * notation.
      */
     @SafeVarargs
     public RegistryEntryList( IForgeRegistry<T> registry, T... entries ) {
@@ -52,8 +51,6 @@ public class RegistryEntryList<T> implements IStringArray {
     /**
      * Create a new registry entry list from an array of entries. Used for creating default configs.
      * Also allows adding tags.
-     * <p>
-     * This method of creation can not take advantage of the * notation.
      */
     @SafeVarargs
     public RegistryEntryList( IForgeRegistry<T> registry, @Nullable List<String> namespaces, @Nullable List<TagKey<T>> tags, T... entries ) {

@@ -5,11 +5,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -22,9 +20,9 @@ public class EntityList implements IStringArray {
     /** The entity-value entries in this list. */
     private final EntityEntry[] ENTRIES;
     /** The entity type tags in this list. */
-    private final List<TagEntityEntry> TAG_ENTRIES = new ArrayList<>();
+    private final List<EntityTagEntry> TAG_ENTRIES = new ArrayList<>();
     /** The namespace entity-value entries in this list. */
-    private final List<NamespaceEntityEntry> NAMESPACE_ENTRIES = new ArrayList<>();
+    private final List<NamespaceRegistryEntry> NAMESPACE_ENTRIES = new ArrayList<>();
     
     /** The number of values each entry must have. If this is negative, then entries may have any non-zero number of values. */
     private int entryValues = -1;
@@ -51,12 +49,12 @@ public class EntityList implements IStringArray {
 
 
     /** Adds the given tag-entries to this entity list. Discards duplicates. */
-    public EntityList addTagEntries( List<TagEntityEntry> tagEntries ) {
-        for ( TagEntityEntry entry : tagEntries ) {
+    public EntityList addTagEntries( List<EntityTagEntry> tagEntries ) {
+        for ( EntityTagEntry entry : tagEntries ) {
             TagKey<EntityType<?>> tagKey = entry.TAG;
             boolean exists = false;
 
-            for ( TagEntityEntry existingEntry : TAG_ENTRIES ) {
+            for ( EntityTagEntry existingEntry : TAG_ENTRIES ) {
                 if ( existingEntry.TAG.location().equals( tagKey.location() ) ) {
                     exists = true;
                     break;
@@ -71,12 +69,12 @@ public class EntityList implements IStringArray {
     }
 
     /** Adds the given namespace-entries to this entity list. Discards duplicates. */
-    public EntityList addNamespaceEntries( List<NamespaceEntityEntry> namespaceEntries ) {
-        for ( NamespaceEntityEntry entry : namespaceEntries ) {
+    public EntityList addNamespaceEntries( List<NamespaceRegistryEntry> namespaceEntries ) {
+        for ( NamespaceRegistryEntry entry : namespaceEntries ) {
             String namespace = entry.NAMESPACE;
             boolean exists = false;
 
-             for ( NamespaceEntityEntry existingEntry : NAMESPACE_ENTRIES ) {
+             for ( NamespaceRegistryEntry existingEntry : NAMESPACE_ENTRIES ) {
                  if ( existingEntry.NAMESPACE.equals( namespace ) ) {
                      exists = true;
                      break;
@@ -108,10 +106,10 @@ public class EntityList implements IStringArray {
         for( EntityEntry entry : ENTRIES ) {
             list.add( entry.toString() );
         }
-        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+        for ( EntityTagEntry tagEntry : TAG_ENTRIES ) {
             list.add( tagEntry.toString() );
         }
-        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+        for ( NamespaceRegistryEntry namespaceEntry : NAMESPACE_ENTRIES ) {
             list.add( namespaceEntry.toString() );
         }
         return list;
@@ -129,13 +127,13 @@ public class EntityList implements IStringArray {
                 return true;
         }
 
-        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+        for ( EntityTagEntry tagEntry : TAG_ENTRIES ) {
             if ( tagEntry.contains( entity.getType() ) )
                 return true;
         }
 
-        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
-            if ( namespaceEntry.contains( targetEntry ) )
+        for ( NamespaceRegistryEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+            if ( namespaceEntry.contains( targetEntry.ENTITY_KEY.getNamespace() ) )
                 return true;
         }
         return false;
@@ -164,13 +162,13 @@ public class EntityList implements IStringArray {
             }
         }
         // Check tag entries
-        for ( TagEntityEntry tagEntry : TAG_ENTRIES ) {
+        for ( EntityTagEntry tagEntry : TAG_ENTRIES ) {
             if ( tagEntry.contains( entity.getType() ) )
                 return tagEntry.VALUES;
         }
         // Check namespace entries
-        for ( NamespaceEntityEntry namespaceEntry : NAMESPACE_ENTRIES ) {
-            if ( namespaceEntry.contains( targetEntry ) )
+        for ( NamespaceRegistryEntry namespaceEntry : NAMESPACE_ENTRIES ) {
+            if ( namespaceEntry.contains( targetEntry.ENTITY_KEY.getNamespace() ) )
                 return namespaceEntry.VALUES;
         }
         return bestMatch == null ? null : bestMatch.VALUES;
