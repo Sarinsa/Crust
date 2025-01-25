@@ -30,7 +30,7 @@ public class BlockListField extends GenericField<BlockList> {
                 "properties not specified will match any value. For example, 'minecraft:beehive[honey_level=5]' will " +
                 "match any full beehives, regardless of the direction they face." );
         comment.add( "  Note that tags and namespace entries are not block state sensitive; they only care about the base block" );
-        comment.add( "      Priority order: specific entries > tag entries > namespace entries > default" );
+        comment.add( "      Priority order: specific entries > tag entries > namespace entries" );
         return comment;
     }
     
