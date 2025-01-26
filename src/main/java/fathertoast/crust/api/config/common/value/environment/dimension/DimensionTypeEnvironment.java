@@ -39,9 +39,15 @@ public class DimensionTypeEnvironment extends DynamicRegistryEnvironment<Level> 
         // Still in level creation or something
         // noinspection ConstantValue
         if ( o instanceof LevelStem levelStem ) {
-            dimensionKey = Registries.levelStemToLevel( level.registryAccess().registry( Registries.LEVEL_STEM )
-                    .orElseThrow().getResourceKey( levelStem )
-                    .orElseThrow() );
+            try {
+                dimensionKey = Registries.levelStemToLevel( level.registryAccess().registry(
+                        Registries.LEVEL_STEM ).orElseThrow()
+                        .getResourceKey( levelStem ).orElseThrow()
+                );
+            }
+            catch ( Exception ignored ) {
+                return false;
+            }
         }
         else {
             try {
