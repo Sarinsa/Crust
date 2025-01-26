@@ -107,7 +107,7 @@ public class TestConfigFile extends AbstractConfigFile {
                             (String[]) null ), General::testCallback ) ).field();
             entityListField = SPEC.define( new InjectionWrapperField<>(
                     new EntityListField( "entity_list", new EntityList(
-                            new EntityEntry( 0.0 ),
+                            new DefaultValueEntry( 0.0 ),
                             new EntityEntry( EntityType.CREEPER, true, 1.0 ),
                             new EntityEntry( EntityType.ZOMBIE, false, 2.0 )
                     ).addTagEntries( List.of(
@@ -144,7 +144,7 @@ public class TestConfigFile extends AbstractConfigFile {
                             (String[]) null ), General::testCallback ) ).field();
             registryEntryValueListField = SPEC.define(
                     new RegistryEntryValueListField<>( "registry_entry_value_list",
-                            new RegistryEntryValueList<>( () -> ForgeRegistries.MOB_EFFECTS,
+                            new RegistryEntryValueList<>( new DefaultValueEntry( 0.0 ), () -> ForgeRegistries.MOB_EFFECTS,
                                     new RegistryValueEntry<>( ForgeRegistries.MOB_EFFECTS.getKey( MobEffects.CONFUSION ), 1.2 ),
                                     new RegistryValueEntry<>( ForgeRegistries.MOB_EFFECTS.getKey( MobEffects.ABSORPTION ), 2.0 )
                             ).setSingleValue()

@@ -222,7 +222,14 @@ public class CrustConfigSpec {
      * This is NOT shown in the GUI; it is recommended to use {@link #fileOnlyNewLine()} to space around it.
      */
     public void describeRegistryEntryList() { fileOnlyComment( RegistryEntryListField.verboseDescription() ); }
-    
+
+    /**
+     * Inserts a detailed description of how to use the registry entry value list field.
+     * Recommended to include either in a README or at the start of each config that contains any registry entry value list fields.
+     * This is NOT shown in the GUI; it is recommended to use {@link #fileOnlyNewLine()} to space around it.
+     */
+    public void describeRegistryEntryValueList() { fileOnlyComment( RegistryEntryValueListField.verboseDescription() ); }
+
     /**
      * Inserts a detailed description of how to use the entity list field.
      * Recommended to include either in a README or at the start of each config that contains any entity list fields.
