@@ -9,7 +9,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * One entity-value entry in an entity list. Uses a 'lazy' implementation so the entity type registry is
@@ -28,7 +30,7 @@ public class EntityEntry {
     /** The values given to this entry. Null for comparison objects. */
     public final double[] VALUES;
     
-    /** The entity type this entry is defined for. If this is null, then this entry will match any entity. */
+    /** The entity type this entry is defined for. */
     private EntityType<? extends Entity> entityType;
     /** The class this entry is defined for. This is not assigned until a world has been loaded. */
     Class<? extends Entity> entityClass;
@@ -43,20 +45,19 @@ public class EntityEntry {
         entityClass = entity.getClass();
     }
     
-    /** Creates an entry with the specified values that acts as a default matching all entity types. Used for creating default configs. */
-    public EntityEntry( double... values ) { this( null, true, values ); }
-    
     /** Creates an extendable entry with the specified values. Used for creating default configs. */
-    public EntityEntry( @Nullable EntityType<? extends Entity> type, double... values ) { this( type, true, values ); }
+    public EntityEntry( @Nonnull EntityType<? extends Entity> type, double... values ) {
+        this( type, true, values );
+    }
     
     /** Creates an entry with the specified values. Used for creating default configs. */
-    public EntityEntry( @Nullable EntityType<? extends Entity> type, boolean extend, double... values ) {
-        this( null, type == null ? null : ForgeRegistries.ENTITY_TYPES.getKey( type ), extend, values );
+    public EntityEntry( @Nonnull EntityType<? extends Entity> type, boolean extend, double... values ) {
+        this( null, Objects.requireNonNull( ForgeRegistries.ENTITY_TYPES.getKey( type ) ), extend, values );
         entityType = type;
     }
     
     /** Creates an entry with the specified values. */
-    public EntityEntry( @Nullable AbstractConfigField field, @Nullable ResourceLocation regKey, boolean extend, double... values ) {
+    public EntityEntry( @Nullable AbstractConfigField field, @Nonnull ResourceLocation regKey, boolean extend, double... values ) {
         FIELD = field;
         ENTITY_KEY = regKey;
         EXTEND = extend;
@@ -65,7 +66,7 @@ public class EntityEntry {
     
     /** @return Loads the entity type from registry. Returns true if successful. */
     private boolean validate() {
-        if( entityType != null || ENTITY_KEY == null ) return true; // Null entity key means this is a default entry
+        if( entityType != null ) return true;
         
         if( !ForgeRegistries.ENTITY_TYPES.containsKey( ENTITY_KEY ) ) {
             ConfigUtil.LOG.warn( "Invalid entry for {} \"{}\"! Invalid entry: {}",
@@ -96,14 +97,12 @@ public class EntityEntry {
     /**
      * @return Returns true if the given entity description is contained within this one (is more specific).
      * <p>
-     * This operates under the assumption that there will not be multiple default entries or multiple non-extendable
+     * This operates under the assumption that there will not be multiple non-extendable
      * entries for the same class in a list.
      */
     public boolean contains( EntityEntry entry ) {
         if( !validate() ) return false;
-        
-        // Handle default entries
-        if( entityType == null ) return true;
+
         if( entry.entityType == null ) return false;
         // Same entity, but non-extendable is more specific
         if( entityClass == entry.entityClass ) return !entry.EXTEND;
@@ -121,7 +120,7 @@ public class EntityEntry {
     @Override
     public String toString() {
         // Start with the entity type registry key
-        StringBuilder str = new StringBuilder( ENTITY_KEY == null ? EntityListField.REG_KEY_DEFAULT : ENTITY_KEY.toString() );
+        StringBuilder str = new StringBuilder( ENTITY_KEY.toString() );
         // Insert "specific" prefix if not extendable
         if( !EXTEND ) {
             str.insert( 0, '~' );

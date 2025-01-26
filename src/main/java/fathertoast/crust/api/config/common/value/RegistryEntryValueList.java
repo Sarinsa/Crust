@@ -1,5 +1,6 @@
 package fathertoast.crust.api.config.common.value;
 
+import fathertoast.crust.api.config.common.field.RegistryEntryValueListField;
 import fathertoast.crust.api.config.common.file.TomlHelper;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
@@ -13,7 +14,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * A list of registry entry-value entries used to link one or more numbers to specific registry objects.
+ * A list of registry entries used to link one or more numbers to specific registry objects.
  * <br></br>
  * For entity types it is recommended to use {@link EntityList},
  * as it offers more conditions specific to entities.
@@ -26,6 +27,9 @@ public class RegistryEntryValueList<T> implements IStringArray {
     private final List<RegistryValueTagEntry<T>> TAG_ENTRIES = new ArrayList<>();
     /** The namespace entity-value entries in this list. */
     private final List<NamespaceRegistryEntry> NAMESPACE_ENTRIES = new ArrayList<>();
+    /** The default entry for this list. */
+    @Nullable
+    final private DefaultValueEntry DEFAULT_ENTRY;
     /** The registry to check against. */
     private final Supplier<IForgeRegistry<T>> registrySupplier;
 
@@ -37,25 +41,26 @@ public class RegistryEntryValueList<T> implements IStringArray {
     private double maxValue = Double.POSITIVE_INFINITY;
 
     /**
-     * Create a new registry entry value list from a list of entries.
+     * Create a new registry entry value list from a list of entries with an optional default entry.
      * <p>
      * By default, entity lists will allow any non-zero number of values, and the value(s) can be any numerical double.
      * These parameters can be changed with helper methods that alter the number of values or values' bounds and return 'this'.
      */
     @SuppressWarnings("unchecked")
-    public RegistryEntryValueList( Supplier<IForgeRegistry<T>> registrySupplier, List<RegistryValueEntry<T>> entries ) {
-        this( registrySupplier, entries.toArray( new RegistryValueEntry[0] ) );
+    public RegistryEntryValueList( @Nullable DefaultValueEntry defaultEntry, Supplier<IForgeRegistry<T>> registrySupplier, List<RegistryValueEntry<T>> entries ) {
+        this( defaultEntry, registrySupplier, entries.toArray( new RegistryValueEntry[0] ) );
     }
 
     /**
-     * Create a new registry entry value list from an array of entries. Used for creating default configs.
+     * Create a new registry entry value list from an array of entries with an optional default entry. Used for creating default configs.
      * <p>
      * By default, these lists will allow any non-zero number of values, and the value(s) can be any numerical double.
      * These parameters can be changed with helper methods that alter the number of values or values' bounds and return 'this'.
      */
     @SafeVarargs
-    public RegistryEntryValueList( Supplier<IForgeRegistry<T>> registrySupplier, RegistryValueEntry<T>... entries ) {
+    public RegistryEntryValueList( @Nullable DefaultValueEntry defaultEntry, Supplier<IForgeRegistry<T>> registrySupplier, RegistryValueEntry<T>... entries ) {
         ENTRIES = entries;
+        DEFAULT_ENTRY = defaultEntry;
         this.registrySupplier = registrySupplier;
     }
 
@@ -136,6 +141,9 @@ public class RegistryEntryValueList<T> implements IStringArray {
         for ( NamespaceRegistryEntry namespaceEntry : NAMESPACE_ENTRIES ) {
             list.add( namespaceEntry.toString() );
         }
+        if ( DEFAULT_ENTRY != null )
+            list.add( DEFAULT_ENTRY.toString() );
+
         return list;
     }
 
@@ -193,6 +201,10 @@ public class RegistryEntryValueList<T> implements IStringArray {
             if ( namespaceEntry.contains( targetEntry.REG_KEY.getNamespace() ) )
                 return namespaceEntry.VALUES;
         }
+        // Return default values, if possible
+        if ( DEFAULT_ENTRY != null )
+            return DEFAULT_ENTRY.VALUES;
+
         return null;
     }
 

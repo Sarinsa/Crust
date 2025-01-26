@@ -3,11 +3,9 @@ package fathertoast.crust.api.config.common.field;
 import fathertoast.crust.api.config.common.ConfigUtil;
 import fathertoast.crust.api.config.common.file.TomlHelper;
 import fathertoast.crust.api.config.common.value.*;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -19,9 +17,6 @@ import java.util.function.Predicate;
  */
 public class RegistryEntryValueListField<T> extends GenericField<RegistryEntryValueList<T>> {
 
-    /** The string to use in place of a registry key for a default entry. */
-    public static final String REG_KEY_DEFAULT = "default";
-
     /** Provides a detailed description of how to use registry entry value lists. Recommended to put at the top of any file using them. */
     public static List<String> verboseDescription() {
         List<String> comment = new ArrayList<>();
@@ -29,13 +24,14 @@ public class RegistryEntryValueListField<T> extends GenericField<RegistryEntryVa
         comment.add( "  Registry entry-value lists are arrays of registry keys. Many things in the game, such as blocks or " +
                 "potions, are defined by their registry key within a registry. For example, all items are registered " +
                 "in the \"minecraft:item\" registry." );
-        comment.add( "  Registry entry-value lists may have one or multiple values linked to each entry." );
-        comment.add( "  '" + REG_KEY_DEFAULT + "' can be used instead of a registry key to provide " +
+        comment.add( "  Registry entry-value lists may have one or multiple numeric values linked to each entry." );
+        comment.add( "  '" + DefaultValueEntry.KEY_DEFAULT + "' can be used instead of a registry key to provide " +
                 "default values." );
         comment.add( "  An asterisk '*' can be used to match all registry entries/keys belonging to X namespace. For example, 'minecraft:*' will " +
                 "match all vanilla entries." );
         comment.add( "  Tags can also be used here. To declare a tag, start with a '#' followed by the rest of the tag path." );
         comment.add( "  Tag example: '#minecraft:oak_logs'");
+        comment.add( "      Priority order: specific entries > tag entries > namespace entries > default" );
         return comment;
     }
 
@@ -99,13 +95,23 @@ public class RegistryEntryValueListField<T> extends GenericField<RegistryEntryVa
             }
         }
         else {
-            List<String> list = TomlHelper.parseStringList( raw );
-            List<RegistryValueEntry<T>> entryList = new ArrayList<>();
-            List<RegistryValueTagEntry<T>> tagEntries = new ArrayList<>();
-            List<NamespaceRegistryEntry> namespaceEntries = new ArrayList<>();
+            final List<String> list = TomlHelper.parseStringList( raw );
+            final List<RegistryValueEntry<T>> entryList = new ArrayList<>();
+            final List<RegistryValueTagEntry<T>> tagEntries = new ArrayList<>();
+            final List<NamespaceRegistryEntry> namespaceEntries = new ArrayList<>();
+            DefaultValueEntry defaultEntry = null;
 
             for( String line : list ) {
-                // Handle special case; create an entry for every entity type under the given namespace
+                String[] args = line.split( " " );
+
+                // Check for default entry
+                if ( defaultEntry == null ) {
+                    if ( args[0].equals( "default" ) ) {
+                        double[] values = parseValues( line, args );
+                        defaultEntry = new DefaultValueEntry( values );
+                    }
+                }
+                // Check for namespace entries
                 if ( line.split( " " )[0].endsWith( "*" ) ) {
                     namespaceEntries.add( parseNamespaceEntry( line ) );
                 }
@@ -117,7 +123,7 @@ public class RegistryEntryValueListField<T> extends GenericField<RegistryEntryVa
                     entryList.add( parseEntry( line ) );
                 }
             }
-            value = new RegistryEntryValueList<>( valueDefault.getRegistry(), entryList );
+            value = new RegistryEntryValueList<>( defaultEntry, valueDefault.getRegistry(), entryList );
             value.addNamespaceEntries( namespaceEntries );
             value.addTagEntries( tagEntries );
         }
@@ -127,16 +133,7 @@ public class RegistryEntryValueListField<T> extends GenericField<RegistryEntryVa
     private RegistryValueEntry<T> parseEntry( final String line ) {
         // Parse the entry-value array
         final String[] args = line.split( " " );
-        final ResourceLocation regKey;
-
-        if( REG_KEY_DEFAULT.equalsIgnoreCase( args[0].trim() ) ) {
-            // Handle the special case of a default entry
-            regKey = null;
-        }
-        else {
-            // Normal entry
-            regKey = new ResourceLocation( args[0].trim() );
-        }
+        final ResourceLocation regKey = new ResourceLocation( args[0].trim() );
         double[] values = parseValues( line, args );
 
         return new RegistryValueEntry<>( this, regKey, values );

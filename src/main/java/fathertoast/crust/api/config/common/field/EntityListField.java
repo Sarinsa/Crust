@@ -19,9 +19,6 @@ import java.util.List;
 @SuppressWarnings( "unused" )
 public class EntityListField extends GenericField<EntityList> {
     
-    /** The string to use in place of a registry key for a default entry. */
-    public static final String REG_KEY_DEFAULT = "default";
-    
     /** Provides a detailed description of how to use entity lists. Recommended to put at the top of any file using entity lists. */
     public static List<String> verboseDescription() {
         List<String> comment = new ArrayList<>();
@@ -30,7 +27,7 @@ public class EntityListField extends GenericField<EntityList> {
                 "to each entity type." );
         comment.add( "  Entity types are defined by their key in the entity registry, usually following the pattern " +
                 "'namespace:entity_name'." );
-        comment.add( "  '" + REG_KEY_DEFAULT + "' can be used instead of an entity type registry key to provide " +
+        comment.add( "  '" + DefaultValueEntry.KEY_DEFAULT + "' can be used instead of an entity type registry key to provide " +
                 "default values for all entities." );
         comment.add( "  List entries by default match any entity type derived from (i.e. based on) their entity type. " +
                 "For example, '~minecraft:zombie'." );
@@ -98,25 +95,36 @@ public class EntityListField extends GenericField<EntityList> {
             value = (EntityList) raw;
         }
         else {
-            List<String> list = TomlHelper.parseStringList( raw );
-            List<EntityEntry> entryList = new ArrayList<>();
-            List<EntityTagEntry> tagEntries = new ArrayList<>();
-            List<NamespaceRegistryEntry> namespaceEntries = new ArrayList<>();
+            final List<String> list = TomlHelper.parseStringList( raw );
+            final List<EntityEntry> entryList = new ArrayList<>();
+            final List<EntityTagEntry> tagEntries = new ArrayList<>();
+            final List<NamespaceRegistryEntry> namespaceEntries = new ArrayList<>();
+            DefaultValueEntry defaultEntry = null;
 
             for( String line : list ) {
-                // Handle special case; create an entry for every entity type under the given namespace
-                if ( line.split( " " )[0].endsWith( "*" ) ) {
+                String[] args = line.split( " " );
+
+                // Check for default entry
+                if ( defaultEntry == null ) {
+                    if ( args[0].equals( "default" ) ) {
+                        double[] values = parseValues( line, args );
+                        defaultEntry = new DefaultValueEntry( values );
+                    }
+                }
+                // Check for namespace entries
+                if ( args[0].endsWith( "*" ) ) {
                     namespaceEntries.add( parseNamespaceEntry( line ) );
                 }
                 // Check for entity type tags
                 else if ( line.startsWith( "#" ) ) {
                     tagEntries.add( parseTagEntry( line ) );
                 }
+                // Try parse as normal entry
                 else {
                     entryList.add( parseEntry( line ) );
                 }
             }
-            value = new EntityList( entryList );
+            value = new EntityList( defaultEntry, entryList );
             value.addNamespaceEntries( namespaceEntries );
             value.addTagEntries( tagEntries );
         }
@@ -138,16 +146,7 @@ public class EntityListField extends GenericField<EntityList> {
         
         // Parse the entity-value array
         final String[] args = modifiedLine.split( " " );
-        final ResourceLocation regKey;
-
-        if( REG_KEY_DEFAULT.equalsIgnoreCase( args[0].trim() ) ) {
-            // Handle the special case of a default entry
-            regKey = null;
-        }
-        else {
-            // Normal entry
-            regKey = new ResourceLocation( args[0].trim() );
-        }
+        final ResourceLocation regKey = new ResourceLocation( args[0].trim() );
         double[] values = parseValues( line, args );
 
         return new EntityEntry( this, regKey, extendable, values );
@@ -183,7 +182,7 @@ public class EntityListField extends GenericField<EntityList> {
      *
      * @throws IllegalArgumentException if the first argument of the line doesn't contain a namespace
      */
-    private NamespaceRegistryEntry parseNamespaceEntry(String line ) {
+    private NamespaceRegistryEntry parseNamespaceEntry( String line ) {
         String[] args = line.split(" ");
         String namespace = args[0].split( ":" )[0];
 

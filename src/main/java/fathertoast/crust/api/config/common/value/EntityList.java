@@ -23,6 +23,9 @@ public class EntityList implements IStringArray {
     private final List<EntityTagEntry> TAG_ENTRIES = new ArrayList<>();
     /** The namespace entity-value entries in this list. */
     private final List<NamespaceRegistryEntry> NAMESPACE_ENTRIES = new ArrayList<>();
+    /** The default entry, if one exists. */
+    @Nullable
+    private final DefaultValueEntry DEFAULT_ENTRY;
     
     /** The number of values each entry must have. If this is negative, then entries may have any non-zero number of values. */
     private int entryValues = -1;
@@ -32,20 +35,23 @@ public class EntityList implements IStringArray {
     private double maxValue = Double.POSITIVE_INFINITY;
     
     /**
-     * Create a new entity list from a list of entries.
+     * Create a new entity list from a list of entries and optionally a default entry.
      * <p>
      * By default, entity lists will allow any non-zero number of values, and the value(s) can be any numerical double.
      * These parameters can be changed with helper methods that alter the number of values or values' bounds and return 'this'.
      */
-    public EntityList( List<EntityEntry> entries ) { this( entries.toArray( new EntityEntry[0] ) ); }
+    public EntityList( @Nullable DefaultValueEntry defaultEntry, List<EntityEntry> entries ) { this( defaultEntry, entries.toArray( new EntityEntry[0] ) ); }
     
     /**
-     * Create a new entity list from an array of entries. Used for creating default configs.
+     * Create a new entity list from an array of entries and optionally a default entry. Used for creating default configs.
      * <p>
      * By default, entity lists will allow any non-zero number of values, and the value(s) can be any numerical double.
      * These parameters can be changed with helper methods that alter the number of values or values' bounds and return 'this'.
      */
-    public EntityList( EntityEntry... entries ) { ENTRIES = entries; }
+    public EntityList( @Nullable DefaultValueEntry defaultEntry, EntityEntry... entries ) {
+        ENTRIES = entries;
+        DEFAULT_ENTRY = defaultEntry;
+    }
 
 
     /** Adds the given tag-entries to this entity list. Discards duplicates. */
@@ -112,6 +118,9 @@ public class EntityList implements IStringArray {
         for ( NamespaceRegistryEntry namespaceEntry : NAMESPACE_ENTRIES ) {
             list.add( namespaceEntry.toString() );
         }
+        if ( DEFAULT_ENTRY != null ) {
+            list.add( DEFAULT_ENTRY.toString() );
+        }
         return list;
     }
     
@@ -171,6 +180,10 @@ public class EntityList implements IStringArray {
             if ( namespaceEntry.contains( targetEntry.ENTITY_KEY.getNamespace() ) )
                 return namespaceEntry.VALUES;
         }
+        // Return default values, if possible
+        if ( DEFAULT_ENTRY != null )
+            return DEFAULT_ENTRY.VALUES;
+
         return bestMatch == null ? null : bestMatch.VALUES;
     }
     

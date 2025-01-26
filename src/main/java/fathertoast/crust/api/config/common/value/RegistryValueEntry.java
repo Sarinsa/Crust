@@ -2,10 +2,14 @@ package fathertoast.crust.api.config.common.value;
 
 import fathertoast.crust.api.config.common.ConfigUtil;
 import fathertoast.crust.api.config.common.field.AbstractConfigField;
+import fathertoast.crust.api.config.common.field.EntityListField;
+import fathertoast.crust.api.config.common.field.RegistryEntryValueListField;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 public class RegistryValueEntry<T> {
 
@@ -18,26 +22,13 @@ public class RegistryValueEntry<T> {
     public final double[] VALUES;
 
 
-    /** Creates an entry used to compare internally with the entries in a registry entry value list. */
-    RegistryValueEntry( IForgeRegistry<T> registry, T registryObject ) {
-        FIELD = null;
-        VALUES = null;
-        REG_KEY = registry.getKey( registryObject );
-    }
-
-    /**
-     * Creates an entry with the specified values that acts as a default matching all entries for the target registry.
-     * Used for creating default configs.
-     */
-    public RegistryValueEntry( double... values ) { this( null, values ); }
-
     /** Creates an entry with the specified values. Used for creating default configs. */
-    public RegistryValueEntry( @Nullable ResourceLocation regKey, double... values ) {
+    public RegistryValueEntry( ResourceLocation regKey, double... values ) {
         this( null, regKey, values );
     }
 
     /** Creates an entry with the specified values. */
-    public RegistryValueEntry( @Nullable AbstractConfigField field, @Nullable ResourceLocation regKey, double... values ) {
+    public RegistryValueEntry( @Nullable AbstractConfigField field, ResourceLocation regKey, double... values ) {
         FIELD = field;
         REG_KEY = regKey;
         VALUES = values;
@@ -45,11 +36,9 @@ public class RegistryValueEntry<T> {
 
     /** @return Loads the registry object from registry. Returns true if successful. */
     private boolean validate( IForgeRegistry<T> registry ) {
-        if( REG_KEY == null ) return true; // Null reg key means this is a default entry
-
-        if( !registry.containsKey( REG_KEY ) ) {
+        if( REG_KEY == null || !registry.containsKey( REG_KEY ) ) {
             ConfigUtil.LOG.warn( "Invalid entry for {} \"{}\"! Invalid entry: {}",
-                    FIELD.getClass(), FIELD.getKey(), REG_KEY.toString() );
+                    FIELD.getClass(), FIELD.getKey(), REG_KEY == null ? "null" : REG_KEY.toString() );
             return false;
         }
         return true;
